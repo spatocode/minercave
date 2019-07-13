@@ -1,19 +1,21 @@
-#include <stdio.h>
+#ifndef POOL_H_
+#define POOL_H_
+
 #include <stdbool.h>
 
-struct Port {
+typedef struct _Port {
 	int difficulty;
 	char host[20];
 	int port;
 	int maxconn;
-};
+} Port;
 
 struct Stratum {
 	char timeout[20];
-	struct Port ports;
+	Port ports;
 };
 
-struct Config {
+typedef struct _Config {
 	char address[20];
 	struct Stratum stratum;
 	bool bypassAddressValidation;
@@ -28,9 +30,9 @@ struct Config {
 	char newrelicName[20];
 	bool newrelicEnabled;
 	bool newrelicVerbose;
-};
+} Config;
 
-
+#endif
 
 
 

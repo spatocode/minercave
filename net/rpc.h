@@ -1,6 +1,9 @@
-#include <stdio.h>
+#ifndef RPC_H_
+#define RPC_H_
 
-struct RPCClient {
+#include <stdbool.h>
+
+typedef struct _RPCClient {
 	int sickRate;
 	int successRate;
 	int accepts;
@@ -11,4 +14,6 @@ struct RPCClient {
 	char password[20];
 	char name[20];
 	bool sick;
-};
+} RPCClient;
+
+#endif

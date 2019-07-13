@@ -1,7 +1,6 @@
-#include <stdio.h>
 #include <stdbool.h>
 
-struct Port {
+/*struct Port {
 	int difficulty;
 	char host[20];
 	int port;
@@ -29,8 +28,7 @@ struct Config {
 	bool newrelicEnabled;
 	bool newrelicVerbose;
 };
-
-
+*/
 
 
 
