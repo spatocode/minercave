@@ -1,33 +1,43 @@
 #ifndef POOL_H_
 #define POOL_H_
 
-#include <stdbool.h>
 
 typedef struct _Port {
 	int difficulty;
-	char host[20];
+	std::string host;
 	int port;
 	int maxconn;
 } Port;
 
-struct Stratum {
-	char timeout[20];
+
+typedef struct _Stratum {
+	std::string timeout;
 	Port ports;
-};
+} Stratum;
+
+
+typedef struct _Upstream {
+	std::string name;
+	std::string host;
+	int port;
+	std::string timeout;
+} Upstream;
+
 
 typedef struct _Config {
-	char address[20];
-	struct Stratum stratum;
+	std::string address;
+	Stratum stratum;
+	Upstream upstream[];
 	bool bypassAddressValidation;
 	bool bypassShareValidation;
-	char blockRefreshInterval[20];
-	char upstreamCheckInterval[20];
-	char estimationWindow[20];
-	char luckWindow[20];
-	char largeLuckWindow[20];
+	std::string blockRefreshInterval;
+	std::string upstreamCheckInterval;
+	std::string estimationWindow;
+	std::string luckWindow;
+	std::string largeLuckWindow;
 	int threads;
-	char newrelicKey[20];
-	char newrelicName[20];
+	std::string newrelicKey;
+	char newrelicName;
 	bool newrelicEnabled;
 	bool newrelicVerbose;
 } Config;

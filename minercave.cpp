@@ -11,6 +11,8 @@ void execStratum();
 
 
 int main(int argc, char** argv) {
+	using namespace minercave;
+	
 	App app;
 	
 	app.init();
@@ -30,8 +32,8 @@ void execStratum() {
 		std::cout<<"Running with default "<<config.threads<<" threads"<<std::endl;;
 	}
 	
-	StratumServer ss;
-	ss.newStratum(&config).listen();
+	Stratum ss;
+	ss.registerStratum(config).listen();
 }
 
 
