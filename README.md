@@ -3,12 +3,13 @@ Highly efficient multi-cryptocurrency miner based on cryptonight algorithm.
 
 
 ## Features
+* Solo-mining
 * Multiple miners
 * High performance.
+* Monitoring
 * Official Windows support.
 * x86/x64 support.
 * Support for daemon backup (failover) list.
-* Works on any stratum pool
 * Easy detection of sick rigs
 
 
