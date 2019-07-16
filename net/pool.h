@@ -2,17 +2,20 @@
 #define POOL_H_
 
 
+namespace Pool {
+
+
 typedef struct _Port {
 	int difficulty;
-	std::string host;
-	int port;
+	char host[20];
+	char port[8];
 	int maxconn;
 } Port;
 
 
 typedef struct _Stratum {
 	std::string timeout;
-	Port ports;
+	Port ports[];
 } Stratum;
 
 
@@ -41,6 +44,9 @@ typedef struct _Config {
 	bool newrelicEnabled;
 	bool newrelicVerbose;
 } Config;
+	
+	
+}
 
 #endif
 

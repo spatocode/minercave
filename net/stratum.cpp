@@ -1,42 +1,30 @@
 #include <iostream>
 #include "stratum.h"
-#include "pool.h"
-#include "rpc.h"
 
 
-void StratumServer::newStratum(Config cfg) {
-	config = cfg;
-	//blockStats = BlockEntry;
+minercave::Stratum::Stratum(Config cfg) {
+	m_config = cfg;
+	//m_blockStats = BlockEntry;
 			
 	for(int i=0; i < (sizeof(cfg.upstream)/sizeof(cfg.upstream[0])); i++) {
-		Client client = minercave::Client::getClient(&cfg.upstream[i]);
-		upstreams[i] = client;
+		Client client(&cfg.upstream[i]);
+		m_upstreams[i] = client.get();
 		printf("Upstream: %s => %s", client.name(), client.url());
 	}
 			
 	printf("Default upstream: %s => %s", rpc.name(), rpc.url());
-	return *this;
 }
 
 
-void StratumServer::listen() {
+void minercave::Stratum::listen() {
+	for(int i=0; i < m_config.stratum.ports; i++) {
+		EndPoint endpoint(m_config.stratum.ports[i]);
+		Stratum ss;
+		endpoint.listen(ss);
+	}
+}
+
+void minercave::StratumServer::rpc() {
 	
 }
-
-void StratumServer::rpc() {
-	
-}
-
-
-void EndPoint::&newEndpoint(Pool cfg) {
-	this->config = cfg;
-	this->instanceId = 4;
-	return *this;
-}
-
-
-void EndPoint::listen() {
-	
-}
-
 

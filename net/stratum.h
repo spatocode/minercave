@@ -4,6 +4,7 @@
 #include <memory>
 #include "pool.h"
 #include "client.h"
+#include "endpoint.h"
 
 #define MaxReqSize 10 * 1024
 
@@ -20,21 +21,7 @@ namespace minercave {
 	
 class Stratum {
 	public:
-		Stratum registerStratum(Config cfg) {
-			config = cfg;
-			//blockStats = BlockEntry;
-			
-			for(int i=0; i < (sizeof(cfg.upstream)/sizeof(cfg.upstream[0])); i++) {
-				Client client; 
-				client.getClient(&cfg.upstream[i]);
-				upstreams[i] = client;
-				printf("Upstream: %s => %s", client.name(), client.url());
-			}
-			
-			printf("Default upstream: %s => %s", rpc.name(), rpc.url());
-			return *this;
-		};
-		
+		Stratum(Pool::Config cfg);
 		Client rpc();
 		void listen();
 		void checkUpstreams();
@@ -54,30 +41,17 @@ class Stratum {
 		void refreshBlockTemplate();
 	
 	private:
-		int luckWindow;
-		int luckLargeWindow;
-		int roundShares;
-		int upstream;
-		Client upstreams[];
-		Config config;
-		BlockEntry blockStats;
+		int m_luck;
+		int m_large;
+		int m_roundShares;
+		int m_upstream;
+		Client m_upstreams[];
+		Pool::Config m_config;
+		BlockEntry m_blockStats;
 };
 	
 }
 
-
-class EndPoint {
-	public:
-		EndPoint &newEndpoint(Port cfg);
-		void listen();
-		
-	private:
-		unsigned int jobSequence;
-		Port config;
-		short instanceId[];
-		unsigned int extraNonce;
-		char targetHex[20];
-};
 
 class Session {
 	public:
@@ -86,9 +60,9 @@ class Session {
 		void sendResult();
 		void handleMessage();
 	private:
-		int lastBlockHeight;
-		char ip[20];
-		EndPoint endpoint;
+		int m_lastBlockHeight;
+		char m_ip[20];
+		minercave::EndPoint m_endpoint;
 };
 
 

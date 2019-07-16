@@ -28,9 +28,11 @@ namespace minercave {
 	
 class Client {
 	public:
-		std::string name() { return m_name; };
-		std::string url() { return m_url; };
-		Client getClient(Upstream* cfg);
+		Client(Pool::Upstream* cfg);
+		~Client();
+		inline const std::string name() const { return m_name; };
+		inline const char *url() const { return m_url; };
+		Client get() { return *this; };
 		GetBlockReply getBlock();
 		GetInfoReply getInfo();
 		GetInfoReply info();
@@ -45,15 +47,15 @@ class Client {
 		void startTimeout();
 		
 	private:
-		int sickRate;
-		int successRate;
-		int accepts;
-		int rejects;
-		int lastSubmitAt;
-		int failsCount;
-		std::string login;
-		std::string m_url;
-		std::string m_password;
+		int m_sickRate;
+		int m_successRate;
+		int m_accepts;
+		int m_rejects;
+		int m_lastSubmitAt;
+		int m_failsCount;
+		char m_login[20];
+		char m_url[46];
+		char m_password[20];
 		std::string m_name;
 		std::string m_client;
 		bool m_sick;
