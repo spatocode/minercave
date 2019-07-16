@@ -5,6 +5,7 @@
 #include "pool.h"
 #include "client.h"
 #include "endpoint.h"
+#include "session.h"
 
 #define MaxReqSize 10 * 1024
 
@@ -32,7 +33,7 @@ class Stratum {
 		bool isActive();
 		void removeSession();
 		void registerSession();
-		void handleClient();
+		void handleClient(Session sess, EndPoint *ep);
 		void handleLoginRPC();
 		void handleGetJobRPC();
 		void handleSubmitRPC();
@@ -51,19 +52,6 @@ class Stratum {
 };
 	
 }
-
-
-class Session {
-	public:
-		void sendError();
-		void pushMessage();
-		void sendResult();
-		void handleMessage();
-	private:
-		int m_lastBlockHeight;
-		char m_ip[20];
-		minercave::EndPoint m_endpoint;
-};
 
 
 #endif

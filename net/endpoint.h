@@ -3,16 +3,19 @@
 
 
 #include "pool.h"
+#include "stratum.h"
 
 
 namespace minercave {
+
+class Stratum;
 
 
 class EndPoint {
 	public:
 		EndPoint(Pool::Port cfg);
 		~EndPoint();
-		void listen();
+		void listen(Stratum st);
 		
 	private:
 		unsigned int m_jobSequence;

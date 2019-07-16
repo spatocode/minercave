@@ -24,7 +24,12 @@ void minercave::Stratum::listen() {
 	}
 }
 
-void minercave::StratumServer::rpc() {
+void minercave::Stratum::handleClient(Session sess, EndPoint *ep) {
+	
+}
+
+
+void minercave::Stratum::setDeadline() {
 	
 }
 
