@@ -10,7 +10,7 @@ minercave::Client::Client(Upstream* cfg) {
 	assert(size > 8);
 	
 	m_url = new[size]();
-	snprintf(url, size - 1, "http://%s:%d/client", cfg.host, cfg.port);
+	snprintf(m_url, size - 1, "http://%s:%d/client", cfg.host, cfg.port);
 	
 	m_name = cfg.name;
 }
