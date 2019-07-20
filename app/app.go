@@ -1,6 +1,12 @@
 package app
 
 import (
+	"encoding/json"
+	"log"
+	"os"
+	"runtime"
+	"path/filepath"
+	"github.com/spatocode/minercave/net"
 	"github.com/fatih/color"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/cpu"
@@ -17,6 +23,8 @@ const (
 	APP_VER_PATCH = 0
 )
 
+var config net.Config
+
 
 func init() {
 	c := color.New(color.FgCyan, color.Bold)
@@ -31,15 +39,35 @@ func init() {
 }
 
 
-func Exec() {
-	printStartup()
-}
-
-
-func printStartup() {
+func Exec(config *net.Config) {
 	printVersionInfo()
 	printMemoryInfo()
 	printCPUInfo()
+	printMinerInfo(config)
+
+	if config.Threads > 0 {
+		runtime.GOMAXPROCS(config.Threads)
+	} else {
+		cpu := runtime.NumCPU()
+		runtime.GOMAXPROCS(cpu)
+	}
+}
+
+
+func Configure(config *net.Config) {
+	configfile := "config.json"
+	configfile, _ = filepath.Abs(configfile)
+
+	file, err := os.Open(configfile)
+	if err != nil {
+		log.Fatal("File error: ", err.Error())
+	}
+	defer file.Close()
+	
+	jsonParser := json.NewDecoder(file)
+	if err = jsonParser.Decode(&config); err != nil {
+		log.Fatal("Configuration error: ", err.Error())
+	}
 }
 
 
@@ -57,7 +85,7 @@ func printMemoryInfo() {
 	c.Printf("	MEMORY			")
 
 	e := color.New(color.FgMagenta, color.Bold)
-	e.Printf("Total: %vGB, Free: %v, UsedPercent: %v%%\n", memory.Total/1000000000, memory.Free, uint64(memory.UsedPercent))
+	e.Printf("Total: %vMB, Free: %v, UsedPercent: %v%%\n", memory.Total/1000000, memory.Free, uint64(memory.UsedPercent))
 }
 
 
@@ -70,6 +98,15 @@ func printCPUInfo(){
 	e.Printf("%s (%v)\n", cpu[0].ModelName, cpu[0].Cores)
 }
 
-func printMinerInfo() {
-	
+func printMinerInfo(config *net.Config) {
+	color.New(color.FgWhite, color.Bold).Printf("	CRYPTOCURRENCY		")
+	color.New(color.FgMagenta, color.Bold).Printf("%s\n", config.Cryptocurrency)
+
+	color.New(color.FgWhite, color.Bold).Printf("	THREADS			")
+	color.New(color.FgMagenta, color.Bold).Printf("%v\n", config.Threads)
+
+	for i, pool := range config.Pools {
+		color.New(color.FgWhite, color.Bold).Printf("	POOL #%v			", i+1)
+		color.New(color.FgMagenta, color.Bold).Printf("%s\n", pool.Url)
+	}
 }

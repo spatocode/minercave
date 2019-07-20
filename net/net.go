@@ -1,4 +1,4 @@
-package app
+package net
 
 type Config struct {
 	Cryptocurrency		string		`json:"cryptocurrency"`
@@ -13,6 +13,6 @@ type Pools struct {
 	Url					string		`json:"url"`
 	User				string		`json:"user"`
 	Password			string		`json:"password"`
-	KeepAlive			string		`json:"keepalive"`
+	KeepAlive			bool		`json:"keepalive"`
 	RigID				string		`json:"rig-id"`
 }
