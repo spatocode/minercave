@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"path/filepath"
 	"github.com/spatocode/minercave/net"
+	"github.com/spatocode/minercave/utils"
 	"github.com/fatih/color"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/cpu"
@@ -27,8 +28,8 @@ var config net.Config
 
 
 func init() {
-	c := color.New(color.FgCyan, color.Bold)
-	c.Println(` 
+	title := color.New(color.FgCyan, color.Bold)
+	title.Println(` 
 	 _      _   _   _   _   _ _ _ _   _ _ _ _   _ _ _ _       _   _        _  _ _ _ _
 	| \    / | | | | \ | | |  _ _ _| | _ _ _ | |  _ _ _|     / \  \ \    / / |  _ _ _|
 	|  \  /  | | | |  \| | | |_ _ _  | |_ _ _/ | |          /_ _\  \ \  / /  | |_ _ _
@@ -60,42 +61,42 @@ func Configure(config *net.Config) {
 
 	file, err := os.Open(configfile)
 	if err != nil {
-		log.Fatal("File error: ", err.Error())
+		utils.LOG_ERR("File error: ", err.Error())
 	}
 	defer file.Close()
 	
 	jsonParser := json.NewDecoder(file)
 	if err = jsonParser.Decode(&config); err != nil {
-		log.Fatal("Configuration error: ", err.Error())
+		utils.LOG_ERR("Configuration error: ", err.Error())
 	}
 }
 
 
 func printVersionInfo() {
-	c := color.New(color.FgWhite, color.Bold)
-	c.Printf("	SOFTWARE		")
+	title := color.New(color.FgWhite, color.Bold)
+	title.Printf("	SOFTWARE		")
 
-	e := color.New(color.FgMagenta, color.Bold)
-	e.Printf("%s v%s\n", APP_NAME, APP_VERSION)
+	value := color.New(color.FgMagenta, color.Bold)
+	value.Printf("%s v%s\n", APP_NAME, APP_VERSION)
 }
 
 func printMemoryInfo() {
 	memory, _ := mem.VirtualMemory()
-	c := color.New(color.FgWhite, color.Bold)
-	c.Printf("	MEMORY			")
+	title := color.New(color.FgWhite, color.Bold)
+	title.Printf("	MEMORY			")
 
-	e := color.New(color.FgMagenta, color.Bold)
-	e.Printf("Total: %vMB, Free: %v, UsedPercent: %v%%\n", memory.Total/1000000, memory.Free, uint64(memory.UsedPercent))
+	value := color.New(color.FgMagenta, color.Bold)
+	value.Printf("Total: %vMB, Free: %v, UsedPercent: %v%%\n", memory.Total/1000000, memory.Free, uint64(memory.UsedPercent))
 }
 
 
 func printCPUInfo(){
 	cpu, _ := cpu.Info()
-	c := color.New(color.FgWhite, color.Bold)
-	c.Printf("	CPU			")
+	title := color.New(color.FgWhite, color.Bold)
+	title.Printf("	CPU			")
 
-	e := color.New(color.FgMagenta, color.Bold)
-	e.Printf("%s (%v)\n", cpu[0].ModelName, cpu[0].Cores)
+	value := color.New(color.FgMagenta, color.Bold)
+	value.Printf("%s (%v)\n", cpu[0].ModelName, cpu[0].Cores)
 }
 
 func printMinerInfo(config *net.Config) {
