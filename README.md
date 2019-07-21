@@ -1,16 +1,15 @@
 # minercave (Under heavy development)
-Highly efficient multi-cryptocurrency miner based on cryptonight algorithm.
+Multi-cryptocurrency CPU miner.
 
 
 ## Features
+* Multiple cryptocurrency
 * Solo-mining
-* Multiple miners
+* Stratum support
 * High performance.
 * Monitoring
 * Official Windows support.
 * x86/x64 support.
-* Support for daemon backup (failover) list.
-* Easy detection of sick rigs
 
 
 ## Contributing
