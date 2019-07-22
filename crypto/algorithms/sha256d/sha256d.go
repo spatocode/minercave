@@ -1,2 +1,0 @@
-package sha256d
-
