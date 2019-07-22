@@ -36,3 +36,7 @@
 [[constraint]]
   name = "github.com/shirou/gopsutil"
   version = "2.19.6"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/robvanmieghem/go-opencl"
