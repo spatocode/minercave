@@ -3,7 +3,6 @@ package base
 import (
 	"github.com/spatocode/minercave/algorithm/sha256d"
 	"github.com/spatocode/minercave/net"
-	"github.com/spatocode/minercave/utils"
 )
 
 var numOfDevice int
@@ -17,16 +16,17 @@ func Connect(cfg *net.Config) {
 
 	hashrateChan := make(chan *sha256d.HashRate, numOfDevice)
 	stratum := net.StratumClient(cfg)
+	stratum.Connect()
 	for i := 0; i < numOfDevice; i++ {
 		miner := &sha256d.Miner{
 			Devices:  numOfDevice,
 			HashRate: hashrateChan,
-			Client:   stratum,
+			Pool:     stratum,
 		}
 		miner.Mine()
 	}
 
-	hashrateReport := make([]float64, numOfDevice)
+	/*hashrateReport := make([]float64, numOfDevice)
 	for {
 		for i := 0; i < numOfDevice; i++ {
 			report := <-hashrateChan
@@ -39,5 +39,5 @@ func Connect(cfg *net.Config) {
 			totalhashrate += hashrate
 		}
 		utils.LOG_INFO("total hashrate: %.1f MH/s\n", totalhashrate)
-	}
+	}*/
 }
