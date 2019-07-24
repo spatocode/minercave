@@ -1,16 +1,16 @@
 package net
 
 import (
-	"encoding/json"
 	"bufio"
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"math/big"
 	"net"
-	"sync"
 	"strings"
+	"sync"
 	"time"
-	"fmt"
 
 	"github.com/spatocode/minercave/utils"
 )
@@ -20,22 +20,22 @@ const (
 )
 
 type StratumRequest struct {
-	ID		uint		`json:"id"`
-	Method	string 		`json:"method"`
-	Params	[]string	`json:"params"`
+	ID     uint     `json:"id"`
+	Method string   `json:"method"`
+	Params []string `json:"params"`
 }
 
 type StratumResponse struct {
-	Method	string				`json:"method"`
-	ID		uint				`json:"id"`
-	Result	*json.RawMessage	`json:"result"`
-	Error	StratumError		`json:"error"`
+	Method string           `json:"method"`
+	ID     uint             `json:"id"`
+	Result *json.RawMessage `json:"result"`
+	Error  StratumError     `json:"error"`
 }
 
 type StratumError struct {
-	Num		uint
-	Str		string
-	Result	*json.RawMessage
+	Num    uint
+	Str    string
+	Result *json.RawMessage
 }
 
 type Pool struct {
@@ -87,9 +87,9 @@ type Stratum struct {
 	user          string
 	pass          string
 	target        *big.Int
-	extranonce1    []byte
+	extranonce1   []byte
 	currentJob    Job
-	startTime	  uint32
+	startTime     uint
 	mutex         sync.Mutex
 	subID         uint
 	submitID      []uint
@@ -133,7 +133,7 @@ func (stratum *Stratum) Connect() {
 		utils.LOG_ERR("%s", err)
 	}
 
-	stratum.startTime = uint32(time.Now().Unix())
+	stratum.startTime = uint(time.Now().Unix())
 
 	time.Sleep(10000 * time.Minute)
 }
@@ -167,7 +167,7 @@ func (stratum *Stratum) dispatch(response StratumResponse) {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("%s\n",msg)
+	fmt.Printf("%s\n", msg)
 }
 
 // Reconnect reconnects to the stratum server when lost
@@ -185,13 +185,15 @@ func (stratum *Stratum) Reconnect() error {
 		return err
 	}
 
+	stratum.startTime = uint(time.Now().Unix())
+
 	return nil
 }
 
 // Subscribe subscribes client to stratum server for receiving mining jobs
 func (stratum *Stratum) Subscribe() error {
 	message := StratumRequest{
-		ID: stratum.id,
+		ID:     stratum.id,
 		Method: "mining.subscribe",
 		Params: []string{"minercave"},
 	}
@@ -217,7 +219,31 @@ func (stratum *Stratum) Subscribe() error {
 	return nil
 }
 
-// Authorize authorizes workers for mining
+// Authorize authorizes miner for mining
 func (stratum *Stratum) Authorize() error {
-	
+	message := StratumRequest{
+		ID:     stratum.id,
+		Method: "mining.authorize",
+		Params: []string{stratum.user, stratum.pass},
+	}
+
+	stratum.authID = message.ID
+	stratum.id++
+
+	jsonMsg, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	_, err = stratum.socket.Write(jsonMsg)
+	if err != nil {
+		return err
+	}
+
+	_, err = stratum.socket.Write([]byte("\n"))
+	if err != nil {
+		return nil
+	}
+
+	return nil
 }
