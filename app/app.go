@@ -38,15 +38,17 @@ func init() {
 	`)
 }
 
+// Exec executes minercave
 func Exec(config *net.Config) {
 	printVersionInfo()
 	printMemoryInfo()
-	printCPUInfo()
+	//printCPUInfo()
 	printMinerInfo(config)
 
 	base.Connect(config)
 }
 
+// Configure sets minercave user configuration using config.json
 func Configure(config *net.Config) {
 	configfile := "config.json"
 	configfile, _ = filepath.Abs(configfile)
@@ -97,5 +99,5 @@ func printMinerInfo(config *net.Config) {
 	color.New(color.FgMagenta, color.Bold).Printf("%v\n", config.Threads)
 
 	color.New(color.FgWhite, color.Bold).Printf("	POOL 			")
-	color.New(color.FgMagenta, color.Bold).Printf("%s\n", config.Pool.Url)
+	color.New(color.FgMagenta, color.Bold).Printf("%s\n", config.Pool.URL)
 }

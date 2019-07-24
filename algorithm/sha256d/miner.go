@@ -15,10 +15,13 @@ type miningWork struct {
 }
 
 type Miner struct {
-	Devices    int
-	HashRate   chan *HashRate
-	MiningWork chan *miningWork
-	Client     *net.Stratum
+	validShares   uint
+	staleShares   uint
+	invalidShares uint
+	Devices       int
+	HashRate      chan *HashRate
+	MiningWork    chan *miningWork
+	Pool          *net.Stratum
 }
 
 func (miner *Miner) Mine() {
