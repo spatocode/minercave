@@ -19,25 +19,49 @@ const (
 	hashSize = 32
 )
 
+// StratumRequest message to stratum server
 type StratumRequest struct {
 	ID     uint     `json:"id"`
 	Method string   `json:"method"`
 	Params []string `json:"params"`
 }
 
+// StratumResponse message from statum server
 type StratumResponse struct {
 	Method string           `json:"method"`
 	ID     uint             `json:"id"`
+	Params []string         `json:"params"`
 	Result *json.RawMessage `json:"result"`
 	Error  StratumError     `json:"error"`
 }
 
+// StratumError struct for response error
 type StratumError struct {
 	Num    uint
 	Str    string
 	Result *json.RawMessage
 }
 
+type SubscribeResponse struct {
+	ID                 uint
+	SubscriptionDetail []string
+	ExtraNonce1        string
+	ExtraNonce2Length  float64
+}
+
+type NotificationResponse struct {
+	JobID        string
+	PrevHash     string
+	Coinbase1    string
+	Coinbase2    string
+	MerkleBranch []string
+	Version      string
+	Nbits        string
+	Ntime        string
+	CleanJobs    bool
+}
+
+// Pool struct for stratum pool settings
 type Pool struct {
 	URL       string `json:"url"`
 	User      string `json:"user"`
@@ -46,6 +70,7 @@ type Pool struct {
 	RigID     string `json:"rig-id"`
 }
 
+// Config struct for configuration settings
 type Config struct {
 	Currency string `json:"cryptocurrency"`
 	Threads  int    `json:"threads"`
@@ -152,22 +177,62 @@ func (stratum *Stratum) Listen() {
 			continue
 		}
 
-		response := StratumResponse{}
-		err = json.Unmarshal([]byte(rawMsg), &response)
+		response, err = stratum.handleRawMessage([]byte(rawMsg))
 		if err != nil {
-			utils.LOG_ERR("%s", err)
+			utils.LOG_ERR("Error handling raw message: %s\n", err)
+			continue
 		}
-		stratum.dispatch(response)
+
 	}
 }
 
-func (stratum *Stratum) dispatch(response StratumResponse) {
+func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
+
+}
+
+func (stratum *Stratum) dispatchHandler(response StratumResponse) {
+	switch response.ID {
+	case 1:
+		stratum.subscribeHandler(response)
+	case 2:
+		stratum.authorizeHandler(response)
+	default:
+		stratum.basicHandler(response)
+	}
+}
+
+func (stratum *Stratum) subscribeHandler(response StratumResponse) {
+	result, err := response.Result.MarshalJSON()
+	if err != nil {
+		return
+	}
+
+	fmt.Println(result)
+
+	/*subscribeResp := SubscribeResponse {
+		ID: response.ID,
+		ExtraNonce1: response.Result
+	}
 	msg, err := json.Marshal(response)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("%s\n", msg)
+	fmt.Printf("Subscription response: %s .......\n", msg)
+	stratum.currentJob = response.Result*/
+}
+
+func (stratum *Stratum) authorizeHandler(response StratumResponse) {
+	msg, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Authorize response: %s ........\n", msg)
+}
+
+func (stratum *Stratum) basicHandler(response StratumResponse) {
+
 }
 
 // Reconnect reconnects to the stratum server when lost
