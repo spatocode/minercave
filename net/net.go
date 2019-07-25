@@ -3,14 +3,15 @@ package net
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"math/big"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"fmt"
 
 	"github.com/spatocode/minercave/utils"
 )
@@ -19,7 +20,7 @@ const (
 	hashSize = 32
 )
 
-// StratumRequest message to stratum server
+// StratumRequest message from stratum server
 type StratumRequest struct {
 	ID     uint     `json:"id"`
 	Method string   `json:"method"`
@@ -43,10 +44,10 @@ type StratumError struct {
 }
 
 type SubscribeResponse struct {
-	ID                 uint
-	SubscriptionDetail []string
-	ExtraNonce1        string
-	ExtraNonce2Length  float64
+	ID                string
+	Notification      string
+	ExtraNonce1       string
+	ExtraNonce2Length float64
 }
 
 type NotificationResponse struct {
@@ -59,6 +60,12 @@ type NotificationResponse struct {
 	Nbits        string
 	Ntime        string
 	CleanJobs    bool
+}
+
+type AuthorizeResponse struct {
+	ID     uint
+	Result bool
+	Error  StratumError
 }
 
 // Pool struct for stratum pool settings
@@ -123,6 +130,7 @@ type Stratum struct {
 	diff          float64
 }
 
+
 // StratumClient registers a new stratum client
 func StratumClient(cfg *Config) *Stratum {
 	var host string
@@ -132,6 +140,7 @@ func StratumClient(cfg *Config) *Stratum {
 	stratum := &Stratum{url: host, user: cfg.Pool.User, pass: cfg.Pool.Pass}
 	return stratum
 }
+
 
 // Connect simply connects to a stratum pool
 func (stratum *Stratum) Connect() {
@@ -163,6 +172,7 @@ func (stratum *Stratum) Connect() {
 	time.Sleep(10000 * time.Minute)
 }
 
+
 // Listen always listens to incoming message from stratum server
 func (stratum *Stratum) Listen() {
 	for {
@@ -177,63 +187,215 @@ func (stratum *Stratum) Listen() {
 			continue
 		}
 
-		response, err = stratum.handleRawMessage([]byte(rawMsg))
+		response, err := stratum.handleRawMessage([]byte(rawMsg))
 		if err != nil {
 			utils.LOG_ERR("Error handling raw message: %s\n", err)
 			continue
 		}
 
+		stratum.dispatchHandler(response)
 	}
 }
 
-func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
 
+func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
+	stratum.mutex.Lock()
+	defer stratum.mutex.Unlock()
+
+	var (
+		method string
+		id     uint
+		obj    map[string]json.RawMessage
+	)
+
+	err := json.Unmarshal(message, &obj)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(obj["method"], &method)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(obj["id"], &id)
+	if err != nil {
+		return nil, err
+	}
+
+	if id == stratum.authID {
+		var (
+			result bool
+			errObj []interface{}
+		)
+
+		err = json.Unmarshal(obj["result"], &result)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(obj["error"], &errObj)
+		if err != nil {
+			return nil, err
+		}
+
+		authResp := &AuthorizeResponse{ID: id, Result: result}
+		if errObj != nil {
+			errNum, _ := errObj[0].(float64)
+			errStr, _ := errObj[1].(string)
+			authResp.Error.Num = uint(errNum)
+			authResp.Error.Str = errStr
+		}
+
+		return authResp, nil
+	}
+
+	if id == stratum.subID {
+		var (
+			result      []json.RawMessage
+			subDetail   [][]string
+			extranonce1 string
+			extranonce2 float64
+		)
+
+		err = json.Unmarshal(obj["result"], &result)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(result) == 0 {
+			return nil, err
+		}
+
+		err = json.Unmarshal(result[0], &subDetail)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(result[1], &extranonce1)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(result[2], &extranonce2)
+		if err != nil {
+			return nil, err
+		}
+
+		subResp := &SubscribeResponse{
+			ExtraNonce1:       extranonce1,
+			ExtraNonce2Length: extranonce2,
+		}
+
+		for i := 0; i < len(subDetail); i++ {
+			if subDetail[i][0] == "mining.notify" {
+				subResp.Notification = subDetail[i][0]
+				subResp.ID = subDetail[i][1]
+			}
+		}
+
+		return subResp, nil
+	}
+
+	switch method {
+	case "mining.notify":
+		var params []interface{}
+
+		err = json.Unmarshal(obj["params"], &params)
+		if err != nil {
+			return nil, err
+		}
+
+		notifResp := &NotificationResponse{
+			JobID:        params[0].(string),
+			PrevHash:     params[1].(string),
+			Coinbase1:    params[2].(string),
+			Coinbase2:    params[3].(string),
+			Version:      params[5].(string),
+			Nbits:        params[6].(string),
+			Ntime:        params[7].(string),
+			CleanJobs:    params[8].(bool),
+		}
+		return notifResp, nil
+
+	case "mining.set_difficulty":
+		var params []interface{}
+
+		err = json.Unmarshal(obj["params"], &params)
+		if err != nil {
+			return nil, err
+		}
+
+		difficulty, _ := params[0].(int)
+		stratum.diff = float64(difficulty)
+
+		stratReq := &StratumRequest{}
+		stratReq.Method = method
+
+		var stratParam []string
+		stratParam = append(stratParam, strconv.FormatFloat(stratum.diff, 'E', -1, 32))
+		stratReq.Params = stratParam
+		return stratReq, nil
+
+	default:
+		stratResp := &StratumResponse{}
+		err = json.Unmarshal(message, &stratResp)
+		if err != nil {
+			return nil, err
+		}
+
+		return stratResp, nil
+	}
 }
 
-func (stratum *Stratum) dispatchHandler(response StratumResponse) {
-	switch response.ID {
-	case 1:
+
+func (stratum *Stratum) dispatchHandler(response interface{}) {
+	switch response.(type) {
+	case *SubscribeResponse:
 		stratum.subscribeHandler(response)
-	case 2:
+	case *AuthorizeResponse:
 		stratum.authorizeHandler(response)
+	case *NotificationResponse:
+		stratum.notificationHandler(response)
+	case *StratumResponse:
+		stratum.stratumResponseHandler(response)
+	case *StratumRequest:
+		stratum.stratumRequestHandler(response)
 	default:
 		stratum.basicHandler(response)
 	}
 }
 
-func (stratum *Stratum) subscribeHandler(response StratumResponse) {
-	result, err := response.Result.MarshalJSON()
-	if err != nil {
-		return
-	}
 
-	fmt.Println(result)
-
-	/*subscribeResp := SubscribeResponse {
-		ID: response.ID,
-		ExtraNonce1: response.Result
-	}
-	msg, err := json.Marshal(response)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Printf("Subscription response: %s .......\n", msg)
-	stratum.currentJob = response.Result*/
+func (stratum *Stratum) stratumResponseHandler(response interface{}) {
+	fmt.Println("stratumResponseHandler")
 }
 
-func (stratum *Stratum) authorizeHandler(response StratumResponse) {
-	msg, err := json.Marshal(response)
-	if err != nil {
-		fmt.Println(err)
-	}
 
-	fmt.Printf("Authorize response: %s ........\n", msg)
+func (stratum *Stratum) stratumRequestHandler(response interface{}) {
+	fmt.Println("stratumRequestHandler")
 }
 
-func (stratum *Stratum) basicHandler(response StratumResponse) {
 
+func (stratum *Stratum) notificationHandler(response interface{}) {
+	fmt.Println("notificationHandler")
 }
+
+
+func (stratum *Stratum) subscribeHandler(response interface{}) {
+	fmt.Println("subscribeHandler")
+}
+
+
+func (stratum *Stratum) authorizeHandler(response interface{}) {
+	fmt.Println("authorizeHandler")
+}
+
+
+func (stratum *Stratum) basicHandler(response interface{}) {
+	fmt.Println("basicHandler")
+}
+
 
 // Reconnect reconnects to the stratum server when lost
 func (stratum *Stratum) Reconnect() error {
