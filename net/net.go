@@ -3,6 +3,7 @@ package net
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"math/big"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"fmt"
 
 	"github.com/spatocode/minercave/utils"
 )
@@ -130,7 +130,6 @@ type Stratum struct {
 	diff          float64
 }
 
-
 // StratumClient registers a new stratum client
 func StratumClient(cfg *Config) *Stratum {
 	var host string
@@ -140,7 +139,6 @@ func StratumClient(cfg *Config) *Stratum {
 	stratum := &Stratum{url: host, user: cfg.Pool.User, pass: cfg.Pool.Pass}
 	return stratum
 }
-
 
 // Connect simply connects to a stratum pool
 func (stratum *Stratum) Connect() {
@@ -172,7 +170,6 @@ func (stratum *Stratum) Connect() {
 	time.Sleep(10000 * time.Minute)
 }
 
-
 // Listen always listens to incoming message from stratum server
 func (stratum *Stratum) Listen() {
 	for {
@@ -197,7 +194,6 @@ func (stratum *Stratum) Listen() {
 	}
 }
 
-
 func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
 	stratum.mutex.Lock()
 	defer stratum.mutex.Unlock()
@@ -213,9 +209,12 @@ func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
 		return nil, err
 	}
 
-	err = json.Unmarshal(obj["method"], &method)
-	if err != nil {
-		return nil, err
+	value, ok := obj["method"]
+	if ok == true {
+		err = json.Unmarshal(value, &method)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = json.Unmarshal(obj["id"], &id)
@@ -307,14 +306,14 @@ func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
 		}
 
 		notifResp := &NotificationResponse{
-			JobID:        params[0].(string),
-			PrevHash:     params[1].(string),
-			Coinbase1:    params[2].(string),
-			Coinbase2:    params[3].(string),
-			Version:      params[5].(string),
-			Nbits:        params[6].(string),
-			Ntime:        params[7].(string),
-			CleanJobs:    params[8].(bool),
+			JobID:     params[0].(string),
+			PrevHash:  params[1].(string),
+			Coinbase1: params[2].(string),
+			Coinbase2: params[3].(string),
+			Version:   params[5].(string),
+			Nbits:     params[6].(string),
+			Ntime:     params[7].(string),
+			CleanJobs: params[8].(bool),
 		}
 		return notifResp, nil
 
@@ -348,7 +347,6 @@ func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
 	}
 }
 
-
 func (stratum *Stratum) dispatchHandler(response interface{}) {
 	switch response.(type) {
 	case *SubscribeResponse:
@@ -366,36 +364,29 @@ func (stratum *Stratum) dispatchHandler(response interface{}) {
 	}
 }
 
-
 func (stratum *Stratum) stratumResponseHandler(response interface{}) {
 	fmt.Println("stratumResponseHandler")
 }
-
 
 func (stratum *Stratum) stratumRequestHandler(response interface{}) {
 	fmt.Println("stratumRequestHandler")
 }
 
-
 func (stratum *Stratum) notificationHandler(response interface{}) {
 	fmt.Println("notificationHandler")
 }
-
 
 func (stratum *Stratum) subscribeHandler(response interface{}) {
 	fmt.Println("subscribeHandler")
 }
 
-
 func (stratum *Stratum) authorizeHandler(response interface{}) {
 	fmt.Println("authorizeHandler")
 }
 
-
 func (stratum *Stratum) basicHandler(response interface{}) {
 	fmt.Println("basicHandler")
 }
-
 
 // Reconnect reconnects to the stratum server when lost
 func (stratum *Stratum) Reconnect() error {
