@@ -90,22 +90,25 @@ type Config struct {
 // Block contains information about our blockchain header
 type Block struct {
 	Version     string
-	PrevHash    []byte
-	CurrentHash []byte
-	Time        uint
-	Bits        uint
+	PrevHash    string
+	CurrentHash string
+	Ntime       string
+	Nbits       string
 	Nonce       uint
 }
 
 // Job contains information about the job generated
 type Job struct {
-	ID          string
-	Valid       bool
-	ExtraNonce1 uint
-	ExtraNonce2 uint
-	Height      int
-	Target      *big.Int
-	Block       Block
+	ID           string
+	Valid        bool
+	ExtraNonce1  string
+	ExtraNonce2  uint
+	Height       int
+	Target       *big.Int
+	Coinbase1    string
+	Coinbase2    string
+	MerkleBranch []string
+	Block        Block
 }
 
 // Stratum contains information about a stratum pool connection
@@ -142,7 +145,7 @@ func StratumClient(cfg *Config) *Stratum {
 
 // Connect simply connects to a stratum pool
 func (stratum *Stratum) Connect() {
-	log.Printf("Connecting to pool %v", stratum.url)
+	log.Printf("Using pool %v", stratum.url)
 	conn, err := net.Dial("tcp", stratum.url)
 	if err != nil {
 		utils.LOG_ERR("DNS error: Bad network or host [%s]\n", stratum.url)
@@ -365,23 +368,38 @@ func (stratum *Stratum) dispatchHandler(response interface{}) {
 }
 
 func (stratum *Stratum) stratumResponseHandler(response interface{}) {
-	fmt.Println("stratumResponseHandler")
+	log.Printf("stratumResponseHandler")
 }
 
 func (stratum *Stratum) stratumRequestHandler(response interface{}) {
-	fmt.Println("stratumRequestHandler")
+	log.Printf("stratumRequestHandler")
 }
 
 func (stratum *Stratum) notificationHandler(response interface{}) {
-	fmt.Println("notificationHandler")
+	
 }
 
 func (stratum *Stratum) subscribeHandler(response interface{}) {
-	fmt.Println("subscribeHandler")
+	resp := response.(*SubscribeResponse)
+	stratum.currentJob.ExtraNonce1 = resp.ExtraNonce1
+	stratum.currentJob.ExtraNonce2 = uint(resp.ExtraNonce2Length)
+	log.Printf("Subscription successful")
 }
 
 func (stratum *Stratum) authorizeHandler(response interface{}) {
-	fmt.Println("authorizeHandler")
+	stratum.mutex.Lock()
+	defer stratum.mutex.Unlock()
+
+	resp := response.(*AuthorizeResponse)
+	if resp.ID == stratum.authID {
+		if resp.Result {
+			log.Printf("Logged in as %s", stratum.user)
+		} else {
+			log.Printf("Authorization failure")
+		}
+	}
+
+	log.Printf("Authorization successful")
 }
 
 func (stratum *Stratum) basicHandler(response interface{}) {
