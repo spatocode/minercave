@@ -376,7 +376,20 @@ func (stratum *Stratum) stratumRequestHandler(response interface{}) {
 }
 
 func (stratum *Stratum) notificationHandler(response interface{}) {
-	
+	stratum.mutex.Lock()
+	defer stratum.mutex.Unlock()
+
+	resp := response.(*NotificationResponse)
+	stratum.currentJob.ID = resp.JobID
+	stratum.currentJob.Valid = resp.CleanJobs
+	//stratum.currentJob.Height
+	stratum.currentJob.Coinbase1 = resp.Coinbase1
+	stratum.currentJob.Coinbase2 = resp.Coinbase2
+	stratum.currentJob.Block.Version = resp.Version
+	stratum.currentJob.Block.Nbits = resp.Nbits
+	stratum.currentJob.Block.Ntime = resp.Ntime
+	stratum.currentJob.Block.PrevHash = resp.PrevHash
+	log.Printf("New notification received")
 }
 
 func (stratum *Stratum) subscribeHandler(response interface{}) {
