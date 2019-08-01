@@ -39,4 +39,4 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/robvanmieghem/go-opencl"
+  name = "github.com/samuel/go-opencl"
