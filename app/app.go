@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"os"
+	"os/signal"
 	"path/filepath"
 
 	"github.com/fatih/color"
@@ -45,6 +46,15 @@ func Exec(config *net.Config) {
 	//printCPUInfo()
 	printMinerInfo(config)
 
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+	
+	go func () {
+		<-sigChan
+		utils.LOG_WARN("Ctrl+C signal received, exiting...\n")
+		os.Exit(1)
+	}()
+	
 	base.Connect(config)
 }
 
