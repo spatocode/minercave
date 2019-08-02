@@ -45,14 +45,6 @@
   version = "v0.0.8"
 
 [[projects]]
-  branch = "master"
-  digest = "1:62f3ffb148d305cd3754451609747b4c38134e69d39205afa7b88e007ab54a3b"
-  name = "github.com/samuel/go-opencl"
-  packages = ["cl"]
-  pruneopts = "UT"
-  revision = "cbcfd10c32ad8fcde8ba7a9d9322a2c2458f0ce5"
-
-[[projects]]
   digest = "1:7da11b90176afd007076eedffbecf1fc56898ea8f84cd14a2fe9adde81fcde82"
   name = "github.com/shirou/gopsutil"
   packages = [
@@ -80,7 +72,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/fatih/color",
-    "github.com/samuel/go-opencl/cl",
     "github.com/shirou/gopsutil/cpu",
     "github.com/shirou/gopsutil/mem",
   ]
