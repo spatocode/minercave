@@ -1,6 +1,8 @@
 package sha256d
 
 import (
+	"time"
+
 	"github.com/spatocode/minercave/net"
 )
 
@@ -9,7 +11,7 @@ type HashRate struct {
 	MinerID int
 }
 
-type miningWork struct {
+type miningJob struct {
 	Header []byte
 	Offset int
 }
@@ -18,12 +20,32 @@ type Miner struct {
 	validShares   uint
 	staleShares   uint
 	invalidShares uint
-	Devices       int
+	devices       int
+	startTime     uint
 	HashRate      chan *HashRate
-	MiningWork    chan *miningWork
-	Pool          *net.Stratum
+	miningJob     chan *miningJob
+	pool          *net.Stratum
+}
+
+func NewMiner(cfg *net.Config) (miner *Miner) {
+	stratum := net.StratumClient(cfg)
+	miner = &Miner{
+		devices:   cfg.Threads,
+		pool:      stratum,
+		startTime: uint(time.Now().Unix()),
+	}
+	miner.miningJob = make(chan *miningJob, miner.devices)
+
+	return
+}
+
+func (miner *Miner) createJob() {
+	miner.pool.Connect()
 }
 
 func (miner *Miner) Mine() {
-	miner.MiningWork = make(chan *miningWork, miner.Devices)
+	go miner.createJob()
+	for i := 0; i < miner.devices; i++ {
+
+	}
 }

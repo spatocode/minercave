@@ -138,6 +138,8 @@ func StratumClient(cfg *Config) *Stratum {
 	var host string
 	if strings.HasPrefix(cfg.Pool.URL, "stratum+tcp://") {
 		host = strings.TrimPrefix(cfg.Pool.URL, "stratum+tcp://")
+	} else {
+		host = cfg.Pool.URL
 	}
 	stratum := &Stratum{url: host, user: cfg.Pool.User, pass: cfg.Pool.Pass}
 	return stratum
@@ -155,6 +157,7 @@ func (stratum *Stratum) Connect() {
 	stratum.id = 1
 	stratum.authID = 2
 	stratum.diff = 1
+	stratum.target = difficultyToTarget(stratum.diff)
 	stratum.reader = bufio.NewReader(stratum.socket)
 	go stratum.Listen()
 
@@ -330,6 +333,7 @@ func (stratum *Stratum) handleRawMessage(message []byte) (interface{}, error) {
 
 		difficulty, _ := params[0].(int)
 		stratum.diff = float64(difficulty)
+		stratum.target = difficultyToTarget(stratum.diff)
 
 		stratReq := &StratumRequest{}
 		stratReq.Method = method
@@ -495,4 +499,16 @@ func (stratum *Stratum) Authorize() error {
 	}
 
 	return nil
+}
+
+func difficultyToTarget(diff float64) *big.Int {
+	diffAsBig := big.NewFloat(diff)
+	bigEndian := "0x00000000ffff0000000000000000000000000000000000000000000000000000"
+
+	targetAsBigInt, _ := new(big.Int).SetString(bigEndian, 0)
+	targetAsBigFloat := new(big.Float)
+	targetAsBigFloat.SetInt(targetAsBigInt).Quo(targetAsBigFloat, diffAsBig)
+	target, _ := targetAsBigFloat.Int(nil)
+
+	return target
 }
