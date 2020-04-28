@@ -1,15 +1,5 @@
-# minercave (Under heavy development)
+# minercave (WIP)
 Multi-cryptocurrency CPU miner.
-
-
-## Features
-* Multiple cryptocurrency
-* Solo-mining
-* Stratum support
-* High performance.
-* Monitoring
-* Official Windows support.
-* x86/x64 support.
 
 
 ## Contributing
